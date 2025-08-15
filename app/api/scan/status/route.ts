@@ -130,6 +130,7 @@ export async function GET(req: NextRequest) {
         outputs_present: !!(trackersUrl || privacyUrl),
         result
       });
+      //return NextResponse.json({ status, result });
     } catch (e: any) {
       return NextResponse.json({ error: e.message || 'Server error' }, { status: 500 });
     }

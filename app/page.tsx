@@ -37,7 +37,7 @@ function verdictLabelFromStars(stars: number) {
 function verdictCopyFromStars(stars: number) {
   switch (true) {
     case stars >= 5:
-      return 'Excellent niveau de conformité. Continuez la surveillance, la documentation et les revues régulières de votre CMP.';
+      return 'Excellent niveau de conformité. Continuez la surveillance, la documentation et les revues régulières de votre CMP. ';
     case stars >= 4:
       return 'Très bon résultat. Quelques ajustements mineurs possibles (durée des cookies, mentions, granularité du refus).';
     case stars >= 3:
@@ -276,7 +276,10 @@ export default function Page() {
                 />
                 <div>
                   <p className="m-0 font-bold">Nous analysons votre site internet…</p>
-                  <p className="m-0 text-slate-500">Cela peut prendre un peu de temps.</p>
+                  <p className="m-0 text-slate-500">Cela peut prendre un peu de temps.<br></br>En attendant, visionnez notre webinaire expliquand en détail vos obligations devant la Loi 25</p>
+                  <div>
+                    <iframe width="560" height="315" src="https://www.youtube.com/embed/AiUAnWHjrMg?si=wAdA2zW5oQETEP0-" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -290,7 +293,7 @@ export default function Page() {
           <DialogHeader>
             <DialogTitle>Verdict de conformité</DialogTitle>
             <DialogDescription>
-              Résultat de l'analyse Didomi pour votre site.
+              Résultat de l'analyse de votre site internet.
             </DialogDescription>
           </DialogHeader>
 
