@@ -1,5 +1,7 @@
+// app/api/scan/start/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-export const runtime = 'nodejs';
+import { sql } from '@vercel/postgres';
+import { randomBytes } from 'crypto';
 
 const BASE = 'https://api.didomi.io/v1';
 
@@ -22,26 +24,25 @@ function api(token: string) {
     fetch(`${BASE}${path}`, {
       ...init,
       headers: {
-        ...(init?.headers || {}),
-        Authorization: `Bearer ${token}`,
         'content-type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        ...(init?.headers || {}),
       },
     });
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { url } = await req.json();
+    const { url, email, firstName, lastName, notify = true, marketing = false } = await req.json();
     if (!url) return NextResponse.json({ error: 'Missing url' }, { status: 400 });
+    if (!email) return NextResponse.json({ error: 'Missing email' }, { status: 400 });
 
     const token = await getToken();
     const call = api(token);
     const org = process.env.DIDOMI_ORG_ID!;
 
-    // 1) Upsert property pour l’URL
-    const listRes = await call(
-      `/reports/compliances/properties?organization_id=${encodeURIComponent(org)}&website=${encodeURIComponent(url)}`
-    );
+    // upsert property
+    const listRes = await call(`/reports/compliances/properties?organization_id=${encodeURIComponent(org)}&website=${encodeURIComponent(url)}`);
     const list = await listRes.json();
     let propertyId = list?.data?.[0]?.id;
 
@@ -49,30 +50,44 @@ export async function POST(req: NextRequest) {
       const body = {
         website: url,
         name: `Scan ${url}`,
-        pages_count: 1,
+        pages_count: 5,
         country: 'ca',
         enabled: true,
         scenarios: [
           { enabled: true, type: 'accept_all', scenario_actions: [{ type: 'accept', order: 0 }] },
+          { enabled: true, type: 'refuse_all', scenario_actions: [{ type: 'refuse', order: 0 }] },
+          { enabled: true, type: 'no_actions', scenario_actions: [] },
         ],
       };
-      const createRes = await call(
-        `/reports/compliances/properties?organization_id=${encodeURIComponent(org)}`,
-        { method: 'POST', body: JSON.stringify(body) }
-      );
+      const createRes = await call(`/reports/compliances/properties?organization_id=${encodeURIComponent(org)}`, {
+        method: 'POST', body: JSON.stringify(body),
+      });
       const created = await createRes.json();
       propertyId = created?.data?.id ?? created?.id;
     }
 
-    // 2) Lancer le rapport
-    const repRes = await call(
-      `/reports/compliances/reports?organization_id=${encodeURIComponent(org)}`,
-      { method: 'POST', body: JSON.stringify({ property_id: propertyId }) }
-    );
+    // trigger report
+    const repRes = await call(`/reports/compliances/reports?organization_id=${encodeURIComponent(org)}`, {
+      method: 'POST', body: JSON.stringify({ property_id: propertyId }),
+    });
     const rep = await repRes.json();
     const reportId = rep?.data?.id ?? rep?.id;
 
-    return NextResponse.json({ reportId });
+    // DB save
+    const magicToken = randomBytes(24).toString('hex');
+    const { rows: sr } = await sql`
+      insert into scan_requests (website_url, didomi_report_id, status)
+      values (${url}, ${reportId}, 'queued')
+      returning id
+    `;
+    const scanId = sr[0].id as string;
+
+    await sql`
+      insert into scan_contacts (scan_id, email, first_name, last_name, notify_ready, marketing_opt_in, magic_token)
+      values (${scanId}, ${email}, ${firstName || null}, ${lastName || null}, ${notify}, ${marketing}, ${magicToken})
+    `;
+
+    return NextResponse.json({ reportId, scanId, magicToken });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'Server error' }, { status: 500 });
   }
