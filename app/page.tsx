@@ -253,6 +253,11 @@ export default function Page() {
                       <p className="m-0 text-slate-500">Cela peut prendre un peu de temps.</p>
                     </div>
                   </div>
+                 
+                </div>
+
+                <div className="basis-1/2">
+                  <p className="mb-2 text-sm text-slate-600">Laissez-nous vos coordonnées — on vous envoie le lien du rapport dès qu’il est prêt.</p>
                   {process.env.NEXT_PUBLIC_WEBINAR_URL && (
                     <div className="mt-4 aspect-video w-full overflow-hidden rounded-lg border">
                       <iframe
@@ -264,19 +269,6 @@ export default function Page() {
                       />
                     </div>
                   )}
-                </div>
-
-                <div className="basis-1/2">
-                  <p className="mb-2 text-sm text-slate-600">Laissez-nous vos coordonnées — on vous envoie le lien du rapport dès qu’il est prêt.</p>
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                    <Input placeholder="Prénom" value={firstName} onChange={e=>setFirst(e.target.value)} />
-                    <Input placeholder="Nom" value={lastName} onChange={e=>setLast(e.target.value)} />
-                    <Input className="md:col-span-2" placeholder="Email" type="email" required value={email} onChange={e=>setEmail(e.target.value)} />
-                    <label className="md:col-span-2 flex items-center gap-2 text-sm">
-                      <input type="checkbox" className="accent-black" checked={marketingOptIn} onChange={e=>setMarketing(e.target.checked)} />
-                      J’accepte de recevoir des communications (optionnel).
-                    </label>
-                  </div>
                 </div>
               </div>
             </motion.div>
